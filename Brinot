@@ -1,1 +1,116 @@
+-- Advanced GUI - Steal a Brinot (LEGAL & HELPFUL)
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local SoundService = game:GetService("SoundService")
+local LocalPlayer = Players.LocalPlayer
 
+-- GUI Setup
+local screenGui = Instance.new("ScreenGui", LocalPlayer:WaitForChild("PlayerGui"))
+screenGui.Name = "BrinotMenu"
+
+local themeDark = true
+
+local mainFrame = Instance.new("Frame", screenGui)
+mainFrame.Size = UDim2.new(0, 260, 0, 380)
+mainFrame.Position = UDim2.new(0.5, -130, 0.5, -190)
+mainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+mainFrame.BorderSizePixel = 0
+mainFrame.Visible = true
+
+local title = Instance.new("TextLabel", mainFrame)
+title.Size = UDim2.new(1, 0, 0, 40)
+title.Text = "🧠 Brinot Yardım Menüsü"
+title.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+title.TextColor3 = Color3.new(1, 1, 1)
+title.TextSize = 18
+title.Font = Enum.Font.GothamBold
+
+-- Fonksiyon: Buton Oluştur
+local function createButton(text, order, callback)
+	local button = Instance.new("TextButton", mainFrame)
+	button.Size = UDim2.new(1, -20, 0, 40)
+	button.Position = UDim2.new(0, 10, 0, 50 + ((order - 1) * 45))
+	button.Text = text
+	button.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+	button.TextColor3 = Color3.new(1, 1, 1)
+	button.TextSize = 16
+	button.Font = Enum.Font.Gotham
+	button.MouseButton1Click:Connect(callback)
+	return button
+end
+
+-- 1. Brinot'a Git
+createButton("📍 Brinot Konumuna Git", 1, function()
+	local brinot = workspace:FindFirstChild("Brinot")
+	if brinot and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+		LocalPlayer.Character.HumanoidRootPart.CFrame = brinot.CFrame + Vector3.new(0, 5, 0)
+	end
+end)
+
+-- 2. Yardım Mesajı
+createButton("❓ Nasıl Oynanır", 2, function()
+	game.StarterGui:SetCore("ChatMakeSystemMessage", {
+		Text = "[BRINOT]: Amacınız Brinot'u çalıp güvenli alana ulaştırmak. Dikkatli olun!";
+		Color = Color3.new(1, 1, 0);
+	})
+end)
+
+-- 3. Karakteri Resetle
+createButton("🔁 Karakteri Resetle", 3, function()
+	LocalPlayer:LoadCharacter()
+end)
+
+-- 4. Tema Değiştir
+createButton("🎨 Temayı Değiştir", 4, function()
+	themeDark = not themeDark
+	local bg = themeDark and Color3.fromRGB(25, 25, 25) or Color3.fromRGB(220, 220, 220)
+	local text = themeDark and Color3.new(1, 1, 1) or Color3.new(0, 0, 0)
+	mainFrame.BackgroundColor3 = bg
+	title.TextColor3 = text
+	for _, child in pairs(mainFrame:GetChildren()) do
+		if child:IsA("TextButton") then
+			child.BackgroundColor3 = themeDark and Color3.fromRGB(60, 60, 60) or Color3.fromRGB(200, 200, 200)
+			child.TextColor3 = text
+		end
+	end
+end)
+
+-- 5. GUI Kapat
+createButton("❌ GUI'yi Kapat", 5, function()
+	mainFrame.Visible = false
+end)
+
+-- 6. Brinot'u taşıyorsan uyarı (her saniye kontrol)
+RunService.RenderStepped:Connect(function()
+	local char = LocalPlayer.Character
+	if char and char:FindFirstChild("Brinot") then
+		game.StarterGui:SetCore("ChatMakeSystemMessage", {
+			Text = "⚠️ Uyarı: Şu anda Brinot'u taşıyorsun!";
+			Color = Color3.new(1, 0.5, 0);
+		})
+
+		local alert = Instance.new("Sound", workspace)
+		alert.SoundId = "rbxassetid://9113420779" -- Alarm sesi
+		alert.Volume = 0.6
+		alert:Play()
+		game.Debris:AddItem(alert, 3)
+	end
+end)
+
+-- 7. Minimap-style Brinot Radarı
+local radar = Instance.new("BillboardGui", workspace)
+radar.Size = UDim2.new(0, 50, 0, 50)
+radar.AlwaysOnTop = true
+
+local icon = Instance.new("ImageLabel", radar)
+icon.Size = UDim2.new(1, 0, 1, 0)
+icon.Image = "rbxassetid://7072718368" -- Hedef ikonu
+icon.BackgroundTransparency = 1
+
+RunService.RenderStepped:Connect(function()
+	local brinot = workspace:FindFirstChild("Brinot")
+	if brinot then
+		radar.Adornee = brinot
+		radar.Enabled = true
+	end
+end)
