@@ -2,6 +2,7 @@ local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
+local StarterGui = game:GetService("StarterGui")
 
 local LocalPlayer = Players.LocalPlayer
 local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
@@ -120,7 +121,6 @@ DeveloperLabel.Parent = MainFrame
 
 local ESPEnabled = false
 local AIMBOTEnabled = false
-local SpeedBoostEnabled = false
 local GODEnabled = false
 
 local function updateButton(button, enabled, key)
@@ -166,8 +166,46 @@ end
 
 local ESPButton = createButton("ESP", 0, "Q")
 local AIMButton = createButton("AIMBOT", 70, "E")
-local SpeedBoostButton = createButton("SPEEDBOOST", 140, "Z")
-local GodButton = createButton("GOD", 210, "X")
+local GodButton = createButton("GOD", 140, "X")
+
+local DiscordButton = Instance.new("TextButton")
+DiscordButton.Name = "DISCORD"
+DiscordButton.Size = UDim2.new(1, 0, 0, 60)
+DiscordButton.Position = UDim2.new(0, 0, 0, 210)
+DiscordButton.BackgroundColor3 = Color3.fromRGB(90, 90, 90)
+DiscordButton.TextColor3 = Color3.fromRGB(230, 230, 230)
+DiscordButton.Font = Enum.Font.GothamBold
+DiscordButton.TextSize = 26
+DiscordButton.Text = "DISCORD"
+DiscordButton.AutoButtonColor = false
+DiscordButton.Parent = ContentFrame
+
+local DiscordCorner = Instance.new("UICorner")
+DiscordCorner.CornerRadius = UDim.new(0, 20)
+DiscordCorner.Parent = DiscordButton
+
+DiscordButton.MouseEnter:Connect(function()
+    DiscordButton.BackgroundColor3 = Color3.fromRGB(120, 120, 120)
+end)
+DiscordButton.MouseLeave:Connect(function()
+    DiscordButton.BackgroundColor3 = Color3.fromRGB(90, 90, 90)
+end)
+
+DiscordButton.MouseButton1Click:Connect(function()
+    local discordLink = "https://discord.gg/j7rEhhbr"
+    if setclipboard then
+        setclipboard(discordLink)
+    elseif set_clipboard then
+        set_clipboard(discordLink)
+    else
+        print("Clipboard kopyalama desteklenmiyor.")
+    end
+    StarterGui:SetCore("SendNotification", {
+        Title = "Bildirim",
+        Text = "DISCORD ADRESI KOPYALANDI",
+        Duration = 3
+    })
+end)
 
 local function addHighlightToCharacter(character)
     if character and not character:FindFirstChild("ESP_Highlight") then
@@ -259,17 +297,26 @@ end
 local character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
 local humanoid = character:WaitForChild("Humanoid")
 
-local normalWalkSpeed = humanoid.WalkSpeed
-local boostedSpeed = normalWalkSpeed * 3
+local GodConnection
+local lastHealth = nil
 
 local function setupGodMode(humanoid)
+    if GodConnection then
+        GodConnection:Disconnect()
+        GodConnection = nil
+    end
+
     if humanoid == nil then return end
 
-    local lastHealth = humanoid.Health
+    lastHealth = humanoid.Health
 
-    humanoid.HealthChanged:Connect(function(newHealth)
-        if GODEnabled and newHealth < lastHealth then
-            humanoid.Health = lastHealth
+    GodConnection = humanoid.HealthChanged:Connect(function(newHealth)
+        if GODEnabled then
+            if newHealth < lastHealth then
+                humanoid.Health = lastHealth
+            else
+                lastHealth = newHealth
+            end
         else
             lastHealth = newHealth
         end
@@ -299,33 +346,21 @@ AIMButton.MouseButton1Click:Connect(function()
     end
 end)
 
-SpeedBoostButton.MouseButton1Click:Connect(function()
-    SpeedBoostEnabled = not SpeedBoostEnabled
-    updateButton(SpeedBoostButton, SpeedBoostEnabled, "Z")
-    if SpeedBoostEnabled then
-        humanoid.WalkSpeed = boostedSpeed
-    else
-        humanoid.WalkSpeed = normalWalkSpeed
-    end
-    print(SpeedBoostEnabled and "Speed Boost açıldı (Z tuşu)" or "Speed Boost kapandı (Z tuşu)")
-end)
-
 GodButton.MouseButton1Click:Connect(function()
     GODEnabled = not GODEnabled
     updateButton(GodButton, GODEnabled, "X")
     print(GODEnabled and "God Mode açıldı (X tuşu)" or "God Mode kapandı (X tuşu)")
+    if humanoid then
+        if GODEnabled then
+            lastHealth = humanoid.Health
+        end
+    end
 end)
 
 LocalPlayer.CharacterAdded:Connect(function(char)
     character = char
     humanoid = char:WaitForChild("Humanoid")
     setupGodMode(humanoid)
-
-    if SpeedBoostEnabled then
-        humanoid.WalkSpeed = boostedSpeed
-    else
-        humanoid.WalkSpeed = normalWalkSpeed
-    end
 end)
 
 local minimized = false
@@ -399,27 +434,13 @@ UserInputService.InputBegan:Connect(function(input, gameProcessed)
             updateButton(ESPButton, ESPEnabled, "Q")
             updateESP(ESPEnabled)
             print(ESPEnabled and "ESP açıldı (Q tuşu)" or "ESP kapandı (Q tuşu)")
-        elseif input.KeyCode == Enum.KeyCode.Z then
-            SpeedBoostEnabled = not SpeedBoostEnabled
-            updateButton(SpeedBoostButton, SpeedBoostEnabled, "Z")
-            if SpeedBoostEnabled then
-                humanoid.WalkSpeed = boostedSpeed
-            else
-                humanoid.WalkSpeed = normalWalkSpeed
-            end
-            print(SpeedBoostEnabled and "Speed Boost açıldı (Z tuşu)" or "Speed Boost kapandı (Z tuşu)")
         elseif input.KeyCode == Enum.KeyCode.X then
             GODEnabled = not GODEnabled
             updateButton(GodButton, GODEnabled, "X")
             print(GODEnabled and "God Mode açıldı (X tuşu)" or "God Mode kapandı (X tuşu)")
+            if GODEnabled then
+                lastHealth = humanoid.Health
+            end
         end
     end
 end)
-
-MainFrame.Size = UDim2.new(0, 0, 0, 0)
-MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
-MainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
-
-local tweenInfo = TweenInfo.new(0.5, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-local tweenSize = TweenService:Create(MainFrame, tweenInfo, {Size = UDim2.new(0, 600, 0, 400)})
-tweenSize:Play()
