@@ -364,7 +364,7 @@ LocalPlayer.CharacterAdded:Connect(function(char)
 end)
 
 local minimized = false
-MinimizeBtn.MouseButton1Click:Connect(function()
+local function toggleMinimize()
     if minimized == false then
         local tweenSize = TweenService:Create(MainFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {Size = UDim2.new(0, 600, 0, 50)})
         tweenSize:Play()
@@ -377,18 +377,23 @@ MinimizeBtn.MouseButton1Click:Connect(function()
         tweenSize:Play()
         minimized = false
     end
-end)
+end
 
+MinimizeBtn.MouseButton1Click:Connect(toggleMinimize)
+
+-- Her yerden sürükleme için
 local dragging = false
 local dragInput, dragStart, startPos
 
 local function update(input)
     local delta = input.Position - dragStart
-    MainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X,
-        startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+    MainFrame.Position = UDim2.new(
+        startPos.X.Scale, startPos.X.Offset + delta.X,
+        startPos.Y.Scale, startPos.Y.Offset + delta.Y
+    )
 end
 
-TitleBar.InputBegan:Connect(function(input)
+MainFrame.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 then
         dragging = true
         dragStart = input.Position
@@ -402,7 +407,7 @@ TitleBar.InputBegan:Connect(function(input)
     end
 end)
 
-TitleBar.InputChanged:Connect(function(input)
+MainFrame.InputChanged:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseMovement then
         dragInput = input
     end
@@ -414,7 +419,7 @@ UserInputService.InputChanged:Connect(function(input)
     end
 end)
 
--- Kısayol tuşları:
+-- Kısayol tuşları (E, Q, X ve M)
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
     if not gameProcessed then
         if input.KeyCode == Enum.KeyCode.E then
@@ -441,6 +446,8 @@ UserInputService.InputBegan:Connect(function(input, gameProcessed)
             if GODEnabled then
                 lastHealth = humanoid.Health
             end
+        elseif input.KeyCode == Enum.KeyCode.M then
+            toggleMinimize()
         end
     end
 end)
