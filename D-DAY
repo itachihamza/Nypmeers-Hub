@@ -1,145 +1,218 @@
+-- SilentNebula GUI (Tema, Ses, Minimize, Discord Webhooklu)
 local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
-local UserInputService = game:GetService("UserInputService")
-local StarterGui = game:GetService("StarterGui")
-local Camera = workspace.CurrentCamera
 local LocalPlayer = Players.LocalPlayer
- 
--- Aimbot Settings
-local AIMBOT_FOV = 150  -- Controlled FOV radius
-local HEADSHOT_PRIORITY = true  -- True = Prefers headshots
-local WALL_CHECK = true  -- True = Won't shoot through walls
-local TEAM_CHECK = true  -- True = Won't target teammates
-local aimbotActive = false  -- Aimbot only activates on RBM
- 
--- WWII-Themed Notifications
-local ww2Messages = {
-    "☠️ Omaha Beach Secured! Aimbot Online! ☠️",
-    "🪖 Operation Overlord Activated! 🪖",
-    "💀 Panzerfaust Engaged! No Survivors! 💀",
-    "🔥 D-DAY STORM ACTIVE! LOCKING HEADSHOTS! 🔥",
-    "🎯 Bulletstorm Deployed! Enemy Forces Eliminated! 🎯",
-    "💣 Normandy Invasion Success! Aimbot Ready! 💣"
+local Mouse = LocalPlayer:GetMouse()
+local HttpService = game:GetService("HttpService")
+
+-- Discord Webhook (KENDİ LİNKİNİZİ EKLEYİN)
+local webhookURL = "https://discord.com/api/webhooks/WEBHOOK_URL_BURAYA"
+
+pcall(function()
+    HttpService:PostAsync(webhookURL, HttpService:JSONEncode({
+        content = "🟢 SilentNebula GUI aktif edildi! Kullanıcı: **" .. LocalPlayer.Name .. "**"
+    }), Enum.HttpContentType.ApplicationJson)
+end)
+
+-- Tema Tanımları
+local currentTheme = "Dark"
+local themes = {
+    Dark = {
+        Background = Color3.fromRGB(35, 35, 35),
+        Button = Color3.fromRGB(60, 60, 60),
+        Text = Color3.fromRGB(255, 255, 255)
+    },
+    Light = {
+        Background = Color3.fromRGB(230, 230, 230),
+        Button = Color3.fromRGB(200, 200, 200),
+        Text = Color3.fromRGB(0, 0, 0)
+    }
 }
- 
--- Function to send notification
-local function sendNotification()
-    StarterGui:SetCore("SendNotification", {
-        Title = "⚡ D-DAY AIMBOT ENGAGED ⚡",
-        Text = ww2Messages[math.random(1, #ww2Messages)],
-        Duration = 5  -- Display for 5 seconds
-    })
+
+-- GUI
+local ScreenGui = Instance.new("ScreenGui", game.CoreGui)
+local Frame = Instance.new("Frame", ScreenGui)
+Frame.Size = UDim2.new(0, 350, 0, 400)
+Frame.Position = UDim2.new(0, 20, 0.5, -200)
+Frame.Active = true
+Frame.Draggable = true
+Instance.new("UICorner", Frame)
+
+-- Başlık
+local Title = Instance.new("TextLabel", Frame)
+Title.Text = "SilentNebula"
+Title.Size = UDim2.new(1, -60, 0, 40)
+Title.Position = UDim2.new(0, 10, 0, 0)
+Title.BackgroundTransparency = 1
+Title.Font = Enum.Font.FredokaOne
+Title.TextScaled = true
+
+-- Buton Tıklama Sesi
+local clickSound = Instance.new("Sound")
+clickSound.SoundId = "rbxassetid://12222225" -- Örnek tıklama sesi, istersen değiştir
+clickSound.Volume = 1
+clickSound.Parent = Frame
+
+-- Kapat butonu
+local CloseBtn = Instance.new("TextButton", Frame)
+CloseBtn.Size = UDim2.new(0, 30, 0, 30)
+CloseBtn.Position = UDim2.new(1, -35, 0, 5)
+CloseBtn.Text = "X"
+CloseBtn.Font = Enum.Font.GothamBold
+CloseBtn.TextSize = 14
+Instance.new("UICorner", CloseBtn)
+
+CloseBtn.MouseButton1Click:Connect(function()
+    clickSound:Play()
+    ScreenGui:Destroy()
+end)
+
+-- Minimize butonu
+local MinBtn = Instance.new("TextButton", Frame)
+MinBtn.Size = UDim2.new(0, 30, 0, 30)
+MinBtn.Position = UDim2.new(1, -70, 0, 5)
+MinBtn.Text = "-"
+MinBtn.Font = Enum.Font.GothamBold
+MinBtn.TextSize = 18
+Instance.new("UICorner", MinBtn)
+
+-- Tema değiştir butonu için yer tutucu (yeri sonradan belirlenecek)
+
+-- Tema uygulayıcı fonksiyon
+local function applyTheme()
+    local t = themes[currentTheme]
+    Frame.BackgroundColor3 = t.Background
+    Title.TextColor3 = t.Text
+    CloseBtn.BackgroundColor3 = t.Button
+    CloseBtn.TextColor3 = t.Text
+    MinBtn.BackgroundColor3 = t.Button
+    MinBtn.TextColor3 = t.Text
+
+    for _, child in pairs(Frame:GetChildren()) do
+        if child:IsA("TextButton") and child ~= CloseBtn and child ~= MinBtn and child ~= themeToggleBtn then
+            child.BackgroundColor3 = t.Button
+            child.TextColor3 = t.Text
+        end
+    end
+
+    if themeToggleBtn then
+        themeToggleBtn.BackgroundColor3 = t.Button
+        themeToggleBtn.TextColor3 = t.Text
+    end
 end
- 
--- Function to check if the target is alive
-local function IsPlayerAlive(player)
-    return player.Character and player.Character:FindFirstChild("Humanoid") and player.Character.Humanoid.Health > 0
+
+-- Buton oluşturucu fonksiyon (tıklama sesi eklenmiş)
+local function CreateButton(text, y, callback)
+    local btn = Instance.new("TextButton", Frame)
+    btn.Size = UDim2.new(0.9, 0, 0, 40)
+    btn.Position = UDim2.new(0.05, 0, 0, y)
+    btn.Text = text
+    btn.Font = Enum.Font.GothamBold
+    btn.TextSize = 16
+    btn.Visible = true
+    Instance.new("UICorner", btn)
+    btn.MouseButton1Click:Connect(function()
+        clickSound:Play()
+        callback()
+    end)
+    return btn
 end
- 
--- Function to check if enemy is valid
-local function GetTarget()
-    local bestTarget = nil
-    local closestDist = AIMBOT_FOV
- 
-    for _, player in pairs(Players:GetPlayers()) do
-        if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("Head") and IsPlayerAlive(player) then
-            -- Team Check
-            if TEAM_CHECK and player.Team == LocalPlayer.Team then
-                continue  -- Skip teammates
+
+-- Butonlar
+local btnSpeed = CreateButton("🔼 Speed Boost", 50, function()
+    local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid")
+    if hum then hum.WalkSpeed = 30 end
+end)
+
+local btnJump = CreateButton("🪂 Jump Boost", 100, function()
+    local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid")
+    if hum then hum.JumpPower = 100 end
+end)
+
+local btnESP = CreateButton("🎯 Enable ESP", 150, function()
+    for _, p in pairs(Players:GetPlayers()) do
+        if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("Head") then
+            if not p.Character:FindFirstChild("ESP") then
+                local esp = Instance.new("BillboardGui", p.Character)
+                esp.Name = "ESP"
+                esp.Adornee = p.Character.Head
+                esp.Size = UDim2.new(0, 100, 0, 40)
+                esp.AlwaysOnTop = true
+                local label = Instance.new("TextLabel", esp)
+                label.Size = UDim2.new(1, 0, 1, 0)
+                label.BackgroundTransparency = 1
+                label.TextColor3 = Color3.new(1, 0, 0)
+                label.Text = p.Name
+                label.TextScaled = true
+                label.Font = Enum.Font.GothamBold
             end
- 
-            local targetPart = player.Character:FindFirstChild("Head") or player.Character:FindFirstChild("HumanoidRootPart")
-            if targetPart then
-                local screenPos, onScreen = Camera:WorldToViewportPoint(targetPart.Position)
-                local mousePos = UserInputService:GetMouseLocation()
-                local distance = (Vector2.new(screenPos.X, screenPos.Y) - mousePos).Magnitude
- 
-                -- Check if within FOV
-                if onScreen and distance < closestDist then
-                    if WALL_CHECK then
-                        local ray = Ray.new(Camera.CFrame.Position, (targetPart.Position - Camera.CFrame.Position).unit * 1000)
-                        local hit, _ = workspace:FindPartOnRay(ray, LocalPlayer.Character)
- 
-                        if hit and hit:IsDescendantOf(player.Character) then
-                            bestTarget = targetPart
-                            closestDist = distance
-                        end
-                    else
-                        bestTarget = targetPart
-                        closestDist = distance
+        end
+    end
+end)
+
+local btnHeal = CreateButton("❤️ Auto Heal", 200, function()
+    spawn(function()
+        while true do
+            wait(1)
+            local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid")
+            if hum and hum.Health < hum.MaxHealth * 0.6 then
+                hum.Health = math.min(hum.MaxHealth, hum.Health + 20)
+            end
+        end
+    end)
+end)
+
+local btnAimlock = CreateButton("🎯 Aimlock (Hold E)", 250, function()
+    local RunService = game:GetService("RunService")
+    local aiming = false
+    Mouse.KeyDown:Connect(function(key)
+        if key == "e" then aiming = true end
+    end)
+    Mouse.KeyUp:Connect(function(key)
+        if key == "e" then aiming = false end
+    end)
+    RunService.RenderStepped:Connect(function()
+        if aiming then
+            local closest, shortest = nil, math.huge
+            for _, p in pairs(Players:GetPlayers()) do
+                if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("Head") then
+                    local dist = (p.Character.Head.Position - LocalPlayer.Character.Head.Position).Magnitude
+                    if dist < shortest then
+                        shortest = dist
+                        closest = p
                     end
                 end
             end
-        end
-    end
-    return bestTarget
-end
- 
--- Toggle Aimbot with Right Mouse Button
-UserInputService.InputBegan:Connect(function(input, gameProcessed)
-    if input.UserInputType == Enum.UserInputType.MouseButton2 then
-        aimbotActive = true
-    end
-end)
- 
-UserInputService.InputEnded:Connect(function(input, gameProcessed)
-    if input.UserInputType == Enum.UserInputType.MouseButton2 then
-        aimbotActive = false
-    end
-end)
- 
--- No Recoil and No Spread
-local function NoRecoilAndNoSpread()
-    local character = LocalPlayer.Character
-    if character and character:FindFirstChild("Humanoid") then
-        local humanoid = character.Humanoid
-        local tool = character:FindFirstChildWhichIsA("Tool")
-        if tool then
-            if tool:FindFirstChild("Recoil") then
-                tool.Recoil.Value = 0
-            end
-            if tool:FindFirstChild("Spread") then
-                tool.Spread.Value = 0
+            if closest and closest.Character and closest.Character:FindFirstChild("Head") then
+                workspace.CurrentCamera.CFrame = CFrame.new(
+                    workspace.CurrentCamera.CFrame.Position,
+                    closest.Character.Head.Position
+                )
             end
         end
-    end
-end
- 
--- Auto-Reload Function
-local function AutoReload()
-    local character = LocalPlayer.Character
-    if character then
-        local tool = character:FindFirstChildWhichIsA("Tool")
-        if tool and tool:FindFirstChild("Ammo") then
-            if tool.Ammo.Value <= 0 then  -- If ammo reaches 0
-                tool:FindFirstChild("ReloadEvent"):FireServer()  -- Trigger reload
-                sendNotification()  -- Send notification when reloading
-            end
+    end)
+end)
+
+-- Tema değiştirme butonu
+local themeToggleBtn = CreateButton("🎨 Tema: Koyu/Açık", 300, function()
+    currentTheme = (currentTheme == "Dark") and "Light" or "Dark"
+    applyTheme()
+end)
+
+-- Minimize ve kapat fonksiyonu
+local minimized = false
+MinBtn.MouseButton1Click:Connect(function()
+    minimized = not minimized
+    for _, child in ipairs(Frame:GetChildren()) do
+        if child:IsA("TextButton") and child ~= CloseBtn and child ~= MinBtn then
+            child.Visible = not minimized
         end
     end
-end
- 
--- Draw FOV Circle
-local fovCircle = Drawing.new("Circle")
-fovCircle.Color = Color3.fromRGB(255, 255, 255) -- White color
-fovCircle.Radius = AIMBOT_FOV -- FOV Radius
-fovCircle.Transparency = 0.7 -- Transparency level (0 = fully opaque, 1 = fully transparent)
-fovCircle.Filled = false -- Don't fill the circle
-fovCircle.Position = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2) -- Center the circle
- 
--- Aimbot Loop (Only activates when holding RBM)
-RunService.RenderStepped:Connect(function()
-    fovCircle.Position = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2) -- Update FOV position
- 
-    if aimbotActive then
-        local target = GetTarget()
-        if target then
-            Camera.CFrame = CFrame.new(Camera.CFrame.Position, target.Position)
-        end
-        NoRecoilAndNoSpread()  -- Apply No Recoil and No Spread
-        AutoReload()  -- Check and reload if needed
+    if minimized then
+        Frame:TweenSize(UDim2.new(0, 350, 0, 50), "Out", "Quart", 0.3, true)
+    else
+        Frame:TweenSize(UDim2.new(0, 350, 0, 400), "Out", "Quart", 0.3, true)
     end
 end)
- 
--- Send WWII-themed notification when script executes
-sendNotification()
+
+-- Tema uygula başlangıçta
+applyTheme()
