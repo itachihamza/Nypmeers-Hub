@@ -1,116 +1,402 @@
--- Advanced GUI - Steal a Brinot (LEGAL & HELPFUL)
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
-local SoundService = game:GetService("SoundService")
+local UserInputService = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
+local StarterGui = game:GetService("StarterGui")
+
 local LocalPlayer = Players.LocalPlayer
+local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 
--- GUI Setup
-local screenGui = Instance.new("ScreenGui", LocalPlayer:WaitForChild("PlayerGui"))
-screenGui.Name = "BrinotMenu"
-
-local themeDark = true
-
-local mainFrame = Instance.new("Frame", screenGui)
-mainFrame.Size = UDim2.new(0, 260, 0, 380)
-mainFrame.Position = UDim2.new(0.5, -130, 0.5, -190)
-mainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-mainFrame.BorderSizePixel = 0
-mainFrame.Visible = true
-
-local title = Instance.new("TextLabel", mainFrame)
-title.Size = UDim2.new(1, 0, 0, 40)
-title.Text = "🧠 Brinot Yardım Menüsü"
-title.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-title.TextColor3 = Color3.new(1, 1, 1)
-title.TextSize = 18
-title.Font = Enum.Font.GothamBold
-
--- Fonksiyon: Buton Oluştur
-local function createButton(text, order, callback)
-	local button = Instance.new("TextButton", mainFrame)
-	button.Size = UDim2.new(1, -20, 0, 40)
-	button.Position = UDim2.new(0, 10, 0, 50 + ((order - 1) * 45))
-	button.Text = text
-	button.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-	button.TextColor3 = Color3.new(1, 1, 1)
-	button.TextSize = 16
-	button.Font = Enum.Font.Gotham
-	button.MouseButton1Click:Connect(callback)
-	return button
+if PlayerGui:FindFirstChild("DDayGUI") then
+    PlayerGui.DDayGUI:Destroy()
 end
 
--- 1. Brinot'a Git
-createButton("📍 Brinot Konumuna Git", 1, function()
-	local brinot = workspace:FindFirstChild("Brinot")
-	if brinot and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-		LocalPlayer.Character.HumanoidRootPart.CFrame = brinot.CFrame + Vector3.new(0, 5, 0)
-	end
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "DDayGUI"
+ScreenGui.Parent = PlayerGui
+ScreenGui.ResetOnSpawn = false
+
+local MainFrame = Instance.new("Frame")
+MainFrame.Size = UDim2.new(0, 500, 0, 320) -- GUI küçültüldü (700x450 → 500x320)
+MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
+MainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
+MainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+MainFrame.BackgroundTransparency = 0.05
+MainFrame.Parent = ScreenGui
+
+local UICornerMain = Instance.new("UICorner")
+UICornerMain.CornerRadius = UDim.new(0, 30)
+UICornerMain.Parent = MainFrame
+
+local Outline = Instance.new("UIStroke")
+Outline.Thickness = 2
+Outline.Color = Color3.fromRGB(60, 60, 60)
+Outline.Parent = MainFrame
+Outline.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+
+local TitleBar = Instance.new("Frame")
+TitleBar.Size = UDim2.new(1, 0, 0, 40) -- Başlık barı biraz küçültüldü (50→40)
+TitleBar.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+TitleBar.Parent = MainFrame
+
+local UICornerTitle = Instance.new("UICorner")
+UICornerTitle.CornerRadius = UDim.new(0, 30)
+UICornerTitle.Parent = TitleBar
+
+local TitleText = Instance.new("TextLabel")
+TitleText.Size = UDim2.new(1, -150, 1, 0) -- Butonlar için yer açıldı
+TitleText.Position = UDim2.new(0, 15, 0, 0)
+TitleText.BackgroundTransparency = 1
+TitleText.Text = "SILENTNEBULA - D-DAY GUI"
+TitleText.TextColor3 = Color3.fromRGB(200, 200, 200)
+TitleText.Font = Enum.Font.GothamBold
+TitleText.TextSize = 22 -- Küçültüldü
+TitleText.TextXAlignment = Enum.TextXAlignment.Left
+TitleText.Parent = TitleBar
+
+local function createTitleButton(text, posX)
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(0, 50, 0, 30) -- Butonlar küçültüldü
+    btn.Position = UDim2.new(1, posX, 0.5, -15)
+    btn.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+    btn.AutoButtonColor = false
+    btn.Text = text
+    btn.TextColor3 = Color3.fromRGB(230, 230, 230)
+    btn.Font = Enum.Font.GothamBold
+    btn.TextSize = 20
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 15)
+    corner.Parent = btn
+    btn.Parent = TitleBar
+
+    btn.MouseEnter:Connect(function()
+        btn.BackgroundColor3 = Color3.fromRGB(130, 130, 130)
+    end)
+    btn.MouseLeave:Connect(function()
+        btn.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+    end)
+
+    return btn
+end
+
+local CloseBtn = createTitleButton("X", -70)
+local MinimizeBtn = createTitleButton("—", -130)
+
+CloseBtn.MouseButton1Click:Connect(function()
+    ScreenGui:Destroy()
 end)
 
--- 2. Yardım Mesajı
-createButton("❓ Nasıl Oynanır", 2, function()
-	game.StarterGui:SetCore("ChatMakeSystemMessage", {
-		Text = "[BRINOT]: Amacınız Brinot'u çalıp güvenli alana ulaştırmak. Dikkatli olun!";
-		Color = Color3.new(1, 1, 0);
-	})
+local minimized = false
+MinimizeBtn.MouseButton1Click:Connect(function()
+    minimized = not minimized
+    if minimized then
+        ContentFrame.Visible = false
+        DeveloperLabel.Visible = false
+        ThemeButton.Visible = false
+        CloseBtn.Position = UDim2.new(1, -70, 0.5, -15)
+        MinimizeBtn.Text = "+"
+    else
+        ContentFrame.Visible = true
+        DeveloperLabel.Visible = true
+        ThemeButton.Visible = true
+        CloseBtn.Position = UDim2.new(1, -70, 0.5, -15)
+        MinimizeBtn.Text = "—"
+    end
 end)
 
--- 3. Karakteri Resetle
-createButton("🔁 Karakteri Resetle", 3, function()
-	LocalPlayer:LoadCharacter()
+local ContentFrame = Instance.new("Frame")
+ContentFrame.Size = UDim2.new(1, -40, 1, -110) -- Küçültüldü
+ContentFrame.Position = UDim2.new(0, 20, 0, 45)
+ContentFrame.BackgroundTransparency = 1
+ContentFrame.Parent = MainFrame
+
+local DeveloperLabel = Instance.new("TextLabel")
+DeveloperLabel.Size = UDim2.new(0, 260, 0, 30) -- Büyütüldü
+DeveloperLabel.Position = UDim2.new(1, -270, 1, -50)
+DeveloperLabel.BackgroundTransparency = 1
+DeveloperLabel.Text = "Developer: Nypmeers"
+DeveloperLabel.TextColor3 = Color3.fromRGB(255, 100, 100) -- Daha dikkat çekici kırmızı
+DeveloperLabel.Font = Enum.Font.GothamBold -- Kalın font
+DeveloperLabel.TextSize = 22 -- Büyütüldü
+DeveloperLabel.TextXAlignment = Enum.TextXAlignment.Right
+DeveloperLabel.Parent = MainFrame
+
+local ESPEnabled = false
+local AIMBOTEnabled = false
+local GODEnabled = false
+
+local BUTTON_HEIGHT = 60 -- Buton yüksekliği biraz küçültüldü (70→60)
+local BUTTON_SPACING = 10
+
+local themes = {
+    {
+        MainFrameColor = Color3.fromRGB(20, 20, 20),
+        OutlineColor = Color3.fromRGB(60, 60, 60),
+        TitleBarColor = Color3.fromRGB(35, 35, 35),
+        ButtonOnColor = Color3.fromRGB(150, 150, 150),
+        ButtonOffColor = Color3.fromRGB(90, 90, 90),
+        ButtonHoverColor = Color3.fromRGB(120, 120, 120),
+        TextColor = Color3.fromRGB(200, 200, 200),
+        DiscordButtonColor = Color3.fromRGB(90, 90, 90),
+        DiscordButtonHover = Color3.fromRGB(120, 120, 120),
+    },
+    {
+        MainFrameColor = Color3.fromRGB(10, 40, 80),
+        OutlineColor = Color3.fromRGB(30, 90, 160),
+        TitleBarColor = Color3.fromRGB(20, 70, 140),
+        ButtonOnColor = Color3.fromRGB(80, 140, 220),
+        ButtonOffColor = Color3.fromRGB(40, 80, 130),
+        ButtonHoverColor = Color3.fromRGB(60, 110, 190),
+        TextColor = Color3.fromRGB(220, 230, 255),
+        DiscordButtonColor = Color3.fromRGB(40, 80, 130),
+        DiscordButtonHover = Color3.fromRGB(60, 110, 190),
+    },
+    {
+        MainFrameColor = Color3.fromRGB(80, 20, 20),
+        OutlineColor = Color3.fromRGB(160, 30, 30),
+        TitleBarColor = Color3.fromRGB(140, 20, 20),
+        ButtonOnColor = Color3.fromRGB(220, 80, 80),
+        ButtonOffColor = Color3.fromRGB(130, 40, 40),
+        ButtonHoverColor = Color3.fromRGB(190, 60, 60),
+        TextColor = Color3.fromRGB(255, 220, 220),
+        DiscordButtonColor = Color3.fromRGB(130, 40, 40),
+        DiscordButtonHover = Color3.fromRGB(190, 60, 60),
+    },
+}
+
+local currentThemeIndex = 1
+
+local function updateButton(button, enabled, key, theme)
+    if enabled then
+        button.BackgroundColor3 = theme.ButtonOnColor
+        button.Text = button.Name .. " ["..key.."] [ON]"
+    else
+        button.BackgroundColor3 = theme.ButtonOffColor
+        button.Text = button.Name .. " ["..key.."] [OFF]"
+    end
+end
+
+local function createButton(name, positionIndex, key, theme)
+    local btn = Instance.new("TextButton")
+    btn.Name = name
+    btn.Size = UDim2.new(1, 0, 0, BUTTON_HEIGHT)
+    btn.Position = UDim2.new(0, 0, 0, (BUTTON_HEIGHT + BUTTON_SPACING) * (positionIndex - 1))
+    btn.BackgroundColor3 = theme.ButtonOffColor
+    btn.TextColor3 = theme.TextColor
+    btn.Font = Enum.Font.GothamBold
+    btn.TextSize = 24
+    btn.Text = name .. " ["..key.."] [OFF]"
+    btn.AutoButtonColor = false
+    btn.Parent = ContentFrame
+
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 20)
+    corner.Parent = btn
+
+    local shadow = Instance.new("Frame")
+    shadow.Size = UDim2.new(1, 6, 1, 6)
+    shadow.Position = UDim2.new(0, -3, 0, -3)
+    shadow.BackgroundColor3 = Color3.new(0, 0, 0)
+    shadow.BackgroundTransparency = 0.75
+    shadow.ZIndex = btn.ZIndex - 1
+    shadow.Parent = btn
+    local shadowCorner = Instance.new("UICorner")
+    shadowCorner.CornerRadius = UDim.new(0, 20)
+    shadowCorner.Parent = shadow
+
+    btn.MouseEnter:Connect(function()
+        if btn.BackgroundColor3 ~= theme.ButtonOnColor then
+            btn.BackgroundColor3 = theme.ButtonHoverColor
+        end
+    end)
+    btn.MouseLeave:Connect(function()
+        if btn.BackgroundColor3 ~= theme.ButtonOnColor then
+            btn.BackgroundColor3 = theme.ButtonOffColor
+        end
+    end)
+
+    return btn
+end
+
+local ESPButton = createButton("ESP", 1, "Q", themes[currentThemeIndex])
+local AIMButton = createButton("AIMBOT", 2, "E", themes[currentThemeIndex])
+local GodButton = createButton("GOD", 3, "X", themes[currentThemeIndex])
+
+local DiscordButton = Instance.new("TextButton")
+DiscordButton.Name = "DISCORD"
+DiscordButton.Size = UDim2.new(1, 0, 0, BUTTON_HEIGHT)
+DiscordButton.Position = UDim2.new(0, 0, 0, (BUTTON_HEIGHT + BUTTON_SPACING) * 4)
+DiscordButton.BackgroundColor3 = themes[currentThemeIndex].DiscordButtonColor
+DiscordButton.TextColor3 = themes[currentThemeIndex].TextColor
+DiscordButton.Font = Enum.Font.GothamBold
+DiscordButton.TextSize = 24
+DiscordButton.Text = "DISCORD"
+DiscordButton.AutoButtonColor = false
+DiscordButton.Parent = ContentFrame
+
+local DiscordCorner = Instance.new("UICorner")
+DiscordCorner.CornerRadius = UDim.new(0, 20)
+DiscordCorner.Parent = DiscordButton
+
+local DiscordShadow = Instance.new("Frame")
+DiscordShadow.Size = UDim2.new(1, 6, 1, 6)
+DiscordShadow.Position = UDim2.new(0, -3, 0, -3)
+DiscordShadow.BackgroundColor3 = Color3.new(0, 0, 0)
+DiscordShadow.BackgroundTransparency = 0.75
+DiscordShadow.ZIndex = DiscordButton.ZIndex - 1
+DiscordShadow.Parent = DiscordButton
+local DiscordShadowCorner = Instance.new("UICorner")
+DiscordShadowCorner.CornerRadius = UDim.new(0, 20)
+DiscordShadowCorner.Parent = DiscordShadow
+
+DiscordButton.MouseEnter:Connect(function()
+    DiscordButton.BackgroundColor3 = themes[currentThemeIndex].DiscordButtonHover
+end)
+DiscordButton.MouseLeave:Connect(function()
+    DiscordButton.BackgroundColor3 = themes[currentThemeIndex].DiscordButtonColor
 end)
 
--- 4. Tema Değiştir
-createButton("🎨 Temayı Değiştir", 4, function()
-	themeDark = not themeDark
-	local bg = themeDark and Color3.fromRGB(25, 25, 25) or Color3.fromRGB(220, 220, 220)
-	local text = themeDark and Color3.new(1, 1, 1) or Color3.new(0, 0, 0)
-	mainFrame.BackgroundColor3 = bg
-	title.TextColor3 = text
-	for _, child in pairs(mainFrame:GetChildren()) do
-		if child:IsA("TextButton") then
-			child.BackgroundColor3 = themeDark and Color3.fromRGB(60, 60, 60) or Color3.fromRGB(200, 200, 200)
-			child.TextColor3 = text
-		end
-	end
+DiscordButton.MouseButton1Click:Connect(function()
+    local discordLink = "https://discord.gg/j7rEhhbr"
+    if setclipboard then
+        setclipboard(discordLink)
+    elseif set_clipboard then
+        set_clipboard(discordLink)
+    else
+        print("Clipboard kopyalama desteklenmiyor.")
+    end
+    StarterGui:SetCore("SendNotification", {
+        Title = "Bildirim",
+        Text = "DISCORD ADRESI KOPYALANDI",
+        Duration = 3
+    })
 end)
 
--- 5. GUI Kapat
-createButton("❌ GUI'yi Kapat", 5, function()
-	mainFrame.Visible = false
+local ThemeButton = Instance.new("TextButton")
+ThemeButton.Name = "THEME"
+ThemeButton.Size = UDim2.new(1, 0, 0, BUTTON_HEIGHT)
+ThemeButton.Position = UDim2.new(0, 0, 1, -BUTTON_HEIGHT)
+ThemeButton.BackgroundColor3 = themes[currentThemeIndex].ButtonOffColor
+ThemeButton.TextColor3 = themes[currentThemeIndex].TextColor
+ThemeButton.Font = Enum.Font.GothamBold
+ThemeButton.TextSize = 24
+ThemeButton.Text = "THEME [T]"
+ThemeButton.AutoButtonColor = false
+ThemeButton.Parent = MainFrame
+
+local ThemeCorner = Instance.new("UICorner")
+ThemeCorner.CornerRadius = UDim.new(0, 20)
+ThemeCorner.Parent = ThemeButton
+
+local ThemeShadow = Instance.new("Frame")
+ThemeShadow.Size = UDim2.new(1, 6, 1, 6)
+ThemeShadow.Position = UDim2.new(0, -3, 0, -3)
+ThemeShadow.BackgroundColor3 = Color3.new(0, 0, 0)
+ThemeShadow.BackgroundTransparency = 0.75
+ThemeShadow.ZIndex = ThemeButton.ZIndex - 1
+ThemeShadow.Parent = ThemeButton
+local ThemeShadowCorner = Instance.new("UICorner")
+ThemeShadowCorner.CornerRadius = UDim.new(0, 20)
+ThemeShadowCorner.Parent = ThemeShadow
+
+ThemeButton.MouseEnter:Connect(function()
+    ThemeButton.BackgroundColor3 = themes[currentThemeIndex].ButtonHoverColor
+end)
+ThemeButton.MouseLeave:Connect(function()
+    ThemeButton.BackgroundColor3 = themes[currentThemeIndex].ButtonOffColor
 end)
 
--- 6. Brinot'u taşıyorsan uyarı (her saniye kontrol)
-RunService.RenderStepped:Connect(function()
-	local char = LocalPlayer.Character
-	if char and char:FindFirstChild("Brinot") then
-		game.StarterGui:SetCore("ChatMakeSystemMessage", {
-			Text = "⚠️ Uyarı: Şu anda Brinot'u taşıyorsun!";
-			Color = Color3.new(1, 0.5, 0);
-		})
-
-		local alert = Instance.new("Sound", workspace)
-		alert.SoundId = "rbxassetid://9113420779" -- Alarm sesi
-		alert.Volume = 0.6
-		alert:Play()
-		game.Debris:AddItem(alert, 3)
-	end
+ThemeButton.MouseButton1Click:Connect(function()
+    currentThemeIndex = currentThemeIndex + 1
+    if currentThemeIndex > #themes then
+        currentThemeIndex = 1
+    end
+    applyTheme(currentThemeIndex)
 end)
 
--- 7. Minimap-style Brinot Radarı
-local radar = Instance.new("BillboardGui", workspace)
-radar.Size = UDim2.new(0, 50, 0, 50)
-radar.AlwaysOnTop = true
+local function applyTheme(themeIndex)
+    local theme = themes[themeIndex]
 
-local icon = Instance.new("ImageLabel", radar)
-icon.Size = UDim2.new(1, 0, 1, 0)
-icon.Image = "rbxassetid://7072718368" -- Hedef ikonu
-icon.BackgroundTransparency = 1
+    MainFrame.BackgroundColor3 = theme.MainFrameColor
+    Outline.Color = theme.OutlineColor
+    TitleBar.BackgroundColor3 = theme.TitleBarColor
+    TitleText.TextColor3 = theme.TextColor
 
-RunService.RenderStepped:Connect(function()
-	local brinot = workspace:FindFirstChild("Brinot")
-	if brinot then
-		radar.Adornee = brinot
-		radar.Enabled = true
-	end
+    CloseBtn.BackgroundColor3 = theme.ButtonOffColor
+    MinimizeBtn.BackgroundColor3 = theme.ButtonOffColor
+
+    updateButton(ESPButton, ESPEnabled, "Q", theme)
+    updateButton(AIMButton, AIMBOTEnabled, "E", theme)
+    updateButton(GodButton, GODEnabled, "X", theme)
+
+    DiscordButton.BackgroundColor3 = theme.DiscordButtonColor
+    DiscordButton.TextColor3 = theme.TextColor
+
+    DiscordButton.MouseEnter:Connect(function()
+        DiscordButton.BackgroundColor3 = theme.DiscordButtonHover
+    end)
+    DiscordButton.MouseLeave:Connect(function()
+        DiscordButton.BackgroundColor3 = theme.DiscordButtonColor
+    end)
+
+    CloseBtn.MouseEnter:Connect(function()
+        CloseBtn.BackgroundColor3 = theme.ButtonHoverColor
+    end)
+    CloseBtn.MouseLeave:Connect(function()
+        CloseBtn.BackgroundColor3 = theme.ButtonOffColor
+    end)
+    MinimizeBtn.MouseEnter:Connect(function()
+        MinimizeBtn.BackgroundColor3 = theme.ButtonHoverColor
+    end)
+    MinimizeBtn.MouseLeave:Connect(function()
+        MinimizeBtn.BackgroundColor3 = theme.ButtonOffColor
+    end)
+
+    ThemeButton.BackgroundColor3 = theme.ButtonOffColor
+    ThemeButton.TextColor3 = theme.TextColor
+    ThemeButton.MouseEnter:Connect(function()
+        ThemeButton.BackgroundColor3 = theme.ButtonHoverColor
+    end)
+    ThemeButton.MouseLeave:Connect(function()
+        ThemeButton.BackgroundColor3 = theme.ButtonOffColor
+    end)
+end
+
+applyTheme(currentThemeIndex)
+
+-- Buton fonksiyonları örnek:
+ESPButton.MouseButton1Click:Connect(function()
+    ESPEnabled = not ESPEnabled
+    updateButton(ESPButton, ESPEnabled, "Q", themes[currentThemeIndex])
 end)
+
+AIMButton.MouseButton1Click:Connect(function()
+    AIMBOTEnabled = not AIMBOTEnabled
+    updateButton(AIMButton, AIMBOTEnabled, "E", themes[currentThemeIndex])
+end)
+
+GodButton.MouseButton1Click:Connect(function()
+    GODEnabled = not GODEnabled
+    updateButton(GodButton, GODEnabled, "X", themes[currentThemeIndex])
+end)
+
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed then return end
+    if input.KeyCode == Enum.KeyCode.Q then
+        ESPEnabled = not ESPEnabled
+        updateButton(ESPButton, ESPEnabled, "Q", themes[currentThemeIndex])
+    elseif input.KeyCode == Enum.KeyCode.E then
+        AIMBOTEnabled = not AIMBOTEnabled
+        updateButton(AIMButton, AIMBOTEnabled, "E", themes[currentThemeIndex])
+    elseif input.KeyCode == Enum.KeyCode.X then
+        GODEnabled = not GODEnabled
+        updateButton(GodButton, GODEnabled, "X", themes[currentThemeIndex])
+    elseif input.KeyCode == Enum.KeyCode.T then
+        currentThemeIndex = currentThemeIndex + 1
+        if currentThemeIndex > #themes then
+            currentThemeIndex = 1
+        end
+        applyTheme(currentThemeIndex)
+    end
+end)
+BU SCRİPTİ BİRAZ DÜZELTELİM GUI BÜYÜKLÜĞÜ BUTONLARLA AYNI OLSUN BUTONLAR NE ORTA OLSUN GUIDEN TAŞMASINLAR GÜNCELLEYİP TAM SCRİP İ BANA VER
