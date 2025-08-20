@@ -119,7 +119,7 @@ DeveloperLabel.TextXAlignment = Enum.TextXAlignment.Right
 DeveloperLabel.Parent = MainFrame
 
 -- Toggle değişkenleri
-local ESPEnabled, AIMBOTEnabled, GODEnabled = false, false, false
+local ESPEnabled, AIMBOTEnabled, GODEnabled, FLYEnabled = false, false, false, false
 
 -- Buton Güncelleme
 local function updateButton(button, enabled, key)
@@ -168,12 +168,13 @@ end
 local ESPButton = createButton("ESP", 0, "Q")
 local AIMButton = createButton("AIMBOT", 70, "E")
 local GodButton = createButton("GOD", 140, "X")
+local FlyButton = createButton("FLY", 210, "H")
 
 -- Discord Butonu
 local DiscordButton = Instance.new("TextButton")
 DiscordButton.Name = "DISCORD"
 DiscordButton.Size = UDim2.new(1, 0, 0, 60)
-DiscordButton.Position = UDim2.new(0, 0, 0, 210)
+DiscordButton.Position = UDim2.new(0, 0, 0, 280)
 DiscordButton.BackgroundColor3 = Color3.fromRGB(90, 90, 90)
 DiscordButton.TextColor3 = Color3.fromRGB(230, 230, 230)
 DiscordButton.Font = Enum.Font.GothamBold
@@ -272,7 +273,7 @@ local function aimbotStep()
     end
 end
 
--- God Mode (Ölümsüzlük)
+-- God Mode
 local character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
 local humanoid = character:WaitForChild("Humanoid")
 local GodConnection, lastHealth = nil, nil
@@ -289,6 +290,42 @@ local function setupGodMode(humanoid)
     end)
 end
 setupGodMode(humanoid)
+
+-- Fly Sistemi
+local FlySpeed = 50
+local FlyConnection
+local function startFly()
+    local char = LocalPlayer.Character
+    if not char then return end
+    local hrp = char:FindFirstChild("HumanoidRootPart")
+    local humanoid = char:FindFirstChild("Humanoid")
+    if not hrp or not humanoid then return end
+    
+    humanoid.PlatformStand = true
+
+    FlyConnection = RunService.RenderStepped:Connect(function()
+        local moveDirection = Vector3.new()
+        if UserInputService:IsKeyDown(Enum.KeyCode.W) then moveDirection = moveDirection + workspace.CurrentCamera.CFrame.LookVector end
+        if UserInputService:IsKeyDown(Enum.KeyCode.S) then moveDirection = moveDirection - workspace.CurrentCamera.CFrame.LookVector end
+        if UserInputService:IsKeyDown(Enum.KeyCode.A) then moveDirection = moveDirection - workspace.CurrentCamera.CFrame.RightVector end
+        if UserInputService:IsKeyDown(Enum.KeyCode.D) then moveDirection = moveDirection + workspace.CurrentCamera.CFrame.RightVector end
+        if UserInputService:IsKeyDown(Enum.KeyCode.Space) then moveDirection = moveDirection + Vector3.new(0,1,0) end
+        if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then moveDirection = moveDirection - Vector3.new(0,1,0) end
+
+        if moveDirection.Magnitude > 0 then
+            hrp.Velocity = moveDirection.Unit * FlySpeed
+        else
+            hrp.Velocity = Vector3.new()
+        end
+    end)
+end
+local function stopFly()
+    local char = LocalPlayer.Character
+    if not char then return end
+    local humanoid = char:FindFirstChild("Humanoid")
+    if humanoid then humanoid.PlatformStand = false end
+    if FlyConnection then FlyConnection:Disconnect() FlyConnection = nil end
+end
 
 -- Buton Clickler
 ESPButton.MouseButton1Click:Connect(function()
@@ -308,6 +345,11 @@ end)
 GodButton.MouseButton1Click:Connect(function()
     GODEnabled = not GODEnabled
     updateButton(GodButton, GODEnabled, "X")
+end)
+FlyButton.MouseButton1Click:Connect(function()
+    FLYEnabled = not FLYEnabled
+    updateButton(FlyButton, FLYEnabled, "H")
+    if FLYEnabled then startFly() else stopFly() end
 end)
 
 LocalPlayer.CharacterAdded:Connect(function(char)
@@ -349,33 +391,28 @@ end)
 MainFrame.InputChanged:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseMovement then dragInput = input end end)
 UserInputService.InputChanged:Connect(function(input) if dragging and input == dragInput then update(input) end end)
 
--- Kısayol tuşları (E, Q, X ve M)
+-- Kısayol tuşları (E, Q, X, H ve M)
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
     if not gameProcessed then
         if input.KeyCode == Enum.KeyCode.E then
             AIMBOTEnabled = not AIMBOTEnabled
             updateButton(AIMButton, AIMBOTEnabled, "E")
-            print(AIMBOTEnabled and "Aimbot açıldı (E tuşu)" or "Aimbot kapandı (E tuşu)")
             if AIMBOTEnabled then
                 RunServiceRenderConnection = RunService.RenderStepped:Connect(aimbotStep)
             else
-                if RunServiceRenderConnection then
-                    RunServiceRenderConnection:Disconnect()
-                    RunServiceRenderConnection = nil
-                end
+                if RunServiceRenderConnection then RunServiceRenderConnection:Disconnect() RunServiceRenderConnection = nil end
             end
         elseif input.KeyCode == Enum.KeyCode.Q then
             ESPEnabled = not ESPEnabled
             updateButton(ESPButton, ESPEnabled, "Q")
             updateESP(ESPEnabled)
-            print(ESPEnabled and "ESP açıldı (Q tuşu)" or "ESP kapandı (Q tuşu)")
         elseif input.KeyCode == Enum.KeyCode.X then
             GODEnabled = not GODEnabled
             updateButton(GodButton, GODEnabled, "X")
-            print(GODEnabled and "God Mode açıldı (X tuşu)" or "God Mode kapandı (X tuşu)")
-            if GODEnabled then
-                lastHealth = humanoid.Health
-            end
+        elseif input.KeyCode == Enum.KeyCode.H then
+            FLYEnabled = not FLYEnabled
+            updateButton(FlyButton, FLYEnabled, "H")
+            if FLYEnabled then startFly() else stopFly() end
         elseif input.KeyCode == Enum.KeyCode.M then
             toggleMinimize()
         end
