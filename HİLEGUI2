@@ -227,9 +227,7 @@ local function updateESP(enabled)
     if enabled then
         for _, player in pairs(Players:GetPlayers()) do
             if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("Humanoid") and player.Character.Humanoid.Health > 0 then
-                if player.Team ~= LocalPlayer.Team then
-                    addHighlightToCharacter(player.Character)
-                end
+                addHighlightToCharacter(player.Character)
             end
         end
     else
@@ -247,7 +245,7 @@ local function getClosestTarget()
     local closestPlayer, shortestDistance = nil, math.huge
     local camera = workspace.CurrentCamera
     for _, player in pairs(Players:GetPlayers()) do
-        if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("Humanoid") and player.Character.Humanoid.Health > 0 and player.Team ~= LocalPlayer.Team then
+        if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("Humanoid") and player.Character.Humanoid.Health > 0 then
             local head = player.Character:FindFirstChild("Head")
             if head then
                 local screenPoint, onScreen = camera:WorldToViewportPoint(head.Position)
@@ -274,7 +272,7 @@ local function aimbotStep()
     end
 end
 
--- God Mode
+-- God Mode (Ölümsüzlük)
 local character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
 local humanoid = character:WaitForChild("Humanoid")
 local GodConnection, lastHealth = nil, nil
@@ -284,11 +282,7 @@ local function setupGodMode(humanoid)
     lastHealth = humanoid.Health
     GodConnection = humanoid.HealthChanged:Connect(function(newHealth)
         if GODEnabled then
-            if newHealth < lastHealth then
-                humanoid.Health = lastHealth
-            else
-                lastHealth = newHealth
-            end
+            humanoid.Health = math.max(humanoid.Health, lastHealth)
         else
             lastHealth = newHealth
         end
@@ -314,7 +308,6 @@ end)
 GodButton.MouseButton1Click:Connect(function()
     GODEnabled = not GODEnabled
     updateButton(GodButton, GODEnabled, "X")
-    if humanoid and GODEnabled then lastHealth = humanoid.Health end
 end)
 
 LocalPlayer.CharacterAdded:Connect(function(char)
@@ -356,16 +349,17 @@ end)
 MainFrame.InputChanged:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseMovement then dragInput = input end end)
 UserInputService.InputChanged:Connect(function(input) if dragging and input == dragInput then update(input) end end)
 
--- Kısayol tuşları (E, Q, X, M)
+-- Kısayol tuşları
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
-    if not gameProcessed then
-        if input.KeyCode == Enum.KeyCode.E then
+    if not gameProcessed and input.UserInputType == Enum.UserInputType.Keyboard then
+        local key = input.KeyCode
+        if key == Enum.KeyCode.E then
             AIMButton.MouseButton1Click:Fire()
-        elseif input.KeyCode == Enum.KeyCode.Q then
+        elseif key == Enum.KeyCode.Q then
             ESPButton.MouseButton1Click:Fire()
-        elseif input.KeyCode == Enum.KeyCode.X then
+        elseif key == Enum.KeyCode.X then
             GodButton.MouseButton1Click:Fire()
-        elseif input.KeyCode == Enum.KeyCode.M then
+        elseif key == Enum.KeyCode.M then
             toggleMinimize()
         end
     end
