@@ -1,1 +1,372 @@
-HİLEGUI2
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
+local StarterGui = game:GetService("StarterGui")
+
+local LocalPlayer = Players.LocalPlayer
+local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
+
+if PlayerGui:FindFirstChild("DDayGUI") then
+    PlayerGui.DDayGUI:Destroy()
+end
+
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "DDayGUI"
+ScreenGui.Parent = PlayerGui
+ScreenGui.ResetOnSpawn = false
+
+local MainFrame = Instance.new("Frame")
+MainFrame.Size = UDim2.new(0, 600, 0, 400)
+MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
+MainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
+MainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+MainFrame.BackgroundTransparency = 0.05
+MainFrame.Parent = ScreenGui
+
+local UICornerMain = Instance.new("UICorner")
+UICornerMain.CornerRadius = UDim.new(0, 30)
+UICornerMain.Parent = MainFrame
+
+local Outline = Instance.new("UIStroke")
+Outline.Thickness = 2
+Outline.Color = Color3.fromRGB(60, 60, 60)
+Outline.Parent = MainFrame
+Outline.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+
+local TitleBar = Instance.new("Frame")
+TitleBar.Size = UDim2.new(1, 0, 0, 50)
+TitleBar.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+TitleBar.Parent = MainFrame
+
+local UICornerTitle = Instance.new("UICorner")
+UICornerTitle.CornerRadius = UDim.new(0, 30)
+UICornerTitle.Parent = TitleBar
+
+local TitleText = Instance.new("TextLabel")
+TitleText.Size = UDim2.new(1, -200, 1, 0)
+TitleText.Position = UDim2.new(0, 15, 0, 0)
+TitleText.BackgroundTransparency = 1
+TitleText.Text = "SILENTNEBULA - D-DAY GUI"
+TitleText.TextColor3 = Color3.fromRGB(200, 200, 200)
+TitleText.Font = Enum.Font.GothamBold
+TitleText.TextSize = 28
+TitleText.TextXAlignment = Enum.TextXAlignment.Left
+TitleText.Parent = TitleBar
+
+local CloseBtn = Instance.new("TextButton")
+CloseBtn.Size = UDim2.new(0, 50, 0, 35)
+CloseBtn.Position = UDim2.new(1, -90, 0.5, -17)
+CloseBtn.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+CloseBtn.AutoButtonColor = false
+CloseBtn.Text = "X"
+CloseBtn.TextColor3 = Color3.fromRGB(230, 230, 230)
+CloseBtn.Font = Enum.Font.GothamBold
+CloseBtn.TextSize = 24
+CloseBtn.Parent = TitleBar
+
+local UICornerClose = Instance.new("UICorner")
+UICornerClose.CornerRadius = UDim.new(0, 17)
+UICornerClose.Parent = CloseBtn
+
+CloseBtn.MouseEnter:Connect(function()
+    CloseBtn.BackgroundColor3 = Color3.fromRGB(130, 130, 130)
+end)
+CloseBtn.MouseLeave:Connect(function()
+    CloseBtn.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+end)
+CloseBtn.MouseButton1Click:Connect(function()
+    ScreenGui:Destroy()
+end)
+
+local MinimizeBtn = Instance.new("TextButton")
+MinimizeBtn.Size = UDim2.new(0, 50, 0, 35)
+MinimizeBtn.Position = UDim2.new(1, -150, 0.5, -17)
+MinimizeBtn.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+MinimizeBtn.AutoButtonColor = false
+MinimizeBtn.Text = "—"
+MinimizeBtn.TextColor3 = Color3.fromRGB(230, 230, 230)
+MinimizeBtn.Font = Enum.Font.GothamBold
+MinimizeBtn.TextSize = 30
+MinimizeBtn.Parent = TitleBar
+
+local UICornerMinimize = Instance.new("UICorner")
+UICornerMinimize.CornerRadius = UDim.new(0, 17)
+UICornerMinimize.Parent = MinimizeBtn
+
+MinimizeBtn.MouseEnter:Connect(function()
+    MinimizeBtn.BackgroundColor3 = Color3.fromRGB(130, 130, 130)
+end)
+MinimizeBtn.MouseLeave:Connect(function()
+    MinimizeBtn.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+end)
+
+local ContentFrame = Instance.new("Frame")
+ContentFrame.Size = UDim2.new(1, -50, 1, -95)
+ContentFrame.Position = UDim2.new(0, 25, 0, 55)
+ContentFrame.BackgroundTransparency = 1
+ContentFrame.Parent = MainFrame
+
+local DeveloperLabel = Instance.new("TextLabel")
+DeveloperLabel.Size = UDim2.new(0, 180, 0, 20)
+DeveloperLabel.Position = UDim2.new(1, -190, 1, -30)
+DeveloperLabel.BackgroundTransparency = 1
+DeveloperLabel.Text = "Developer: Nypmeers"
+DeveloperLabel.TextColor3 = Color3.fromRGB(150, 150, 150)
+DeveloperLabel.Font = Enum.Font.Gotham
+DeveloperLabel.TextSize = 18
+DeveloperLabel.TextXAlignment = Enum.TextXAlignment.Right
+DeveloperLabel.Parent = MainFrame
+
+-- Toggle değişkenleri
+local ESPEnabled, AIMBOTEnabled, GODEnabled = false, false, false
+
+-- Buton Güncelleme
+local function updateButton(button, enabled, key)
+    if enabled then
+        button.BackgroundColor3 = Color3.fromRGB(150, 150, 150)
+        button.Text = button.Name .. " ["..key.."] [ON]"
+    else
+        button.BackgroundColor3 = Color3.fromRGB(90, 90, 90)
+        button.Text = button.Name .. " ["..key.."] [OFF]"
+    end
+end
+
+-- Buton oluşturma
+local function createButton(name, positionY, key)
+    local btn = Instance.new("TextButton")
+    btn.Name = name
+    btn.Size = UDim2.new(1, 0, 0, 60)
+    btn.Position = UDim2.new(0, 0, 0, positionY)
+    btn.BackgroundColor3 = Color3.fromRGB(90, 90, 90)
+    btn.TextColor3 = Color3.fromRGB(230, 230, 230)
+    btn.Font = Enum.Font.GothamBold
+    btn.TextSize = 26
+    btn.Text = name .. " ["..key.."] [OFF]"
+    btn.AutoButtonColor = false
+    btn.Parent = ContentFrame
+
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 20)
+    corner.Parent = btn
+
+    btn.MouseEnter:Connect(function()
+        if btn.BackgroundColor3 ~= Color3.fromRGB(150, 150, 150) then
+            btn.BackgroundColor3 = Color3.fromRGB(120, 120, 120)
+        end
+    end)
+    btn.MouseLeave:Connect(function()
+        if btn.BackgroundColor3 ~= Color3.fromRGB(150, 150, 150) then
+            btn.BackgroundColor3 = Color3.fromRGB(90, 90, 90)
+        end
+    end)
+
+    return btn
+end
+
+-- Butonlar
+local ESPButton = createButton("ESP", 0, "Q")
+local AIMButton = createButton("AIMBOT", 70, "E")
+local GodButton = createButton("GOD", 140, "X")
+
+-- Discord Butonu
+local DiscordButton = Instance.new("TextButton")
+DiscordButton.Name = "DISCORD"
+DiscordButton.Size = UDim2.new(1, 0, 0, 60)
+DiscordButton.Position = UDim2.new(0, 0, 0, 210)
+DiscordButton.BackgroundColor3 = Color3.fromRGB(90, 90, 90)
+DiscordButton.TextColor3 = Color3.fromRGB(230, 230, 230)
+DiscordButton.Font = Enum.Font.GothamBold
+DiscordButton.TextSize = 26
+DiscordButton.Text = "DISCORD"
+DiscordButton.AutoButtonColor = false
+DiscordButton.Parent = ContentFrame
+
+local DiscordCorner = Instance.new("UICorner")
+DiscordCorner.CornerRadius = UDim.new(0, 20)
+DiscordCorner.Parent = DiscordButton
+
+DiscordButton.MouseEnter:Connect(function()
+    DiscordButton.BackgroundColor3 = Color3.fromRGB(120, 120, 120)
+end)
+DiscordButton.MouseLeave:Connect(function()
+    DiscordButton.BackgroundColor3 = Color3.fromRGB(90, 90, 90)
+end)
+DiscordButton.MouseButton1Click:Connect(function()
+    local discordLink = "https://discord.gg/j7rEhhbr"
+    if setclipboard then
+        setclipboard(discordLink)
+    elseif set_clipboard then
+        set_clipboard(discordLink)
+    else
+        print("Clipboard kopyalama desteklenmiyor.")
+    end
+    StarterGui:SetCore("SendNotification", {
+        Title = "Bildirim",
+        Text = "DISCORD ADRESI KOPYALANDI",
+        Duration = 3
+    })
+end)
+
+-- ESP Fonksiyonları
+local function addHighlightToCharacter(character)
+    if character and not character:FindFirstChild("ESP_Highlight") then
+        local highlight = Instance.new("Highlight")
+        highlight.Name = "ESP_Highlight"
+        highlight.FillColor = Color3.fromRGB(255, 85, 0)
+        highlight.OutlineColor = Color3.fromRGB(255, 150, 50)
+        highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+        highlight.Parent = character
+    end
+end
+local function removeHighlightFromCharacter(character)
+    local highlight = character and character:FindFirstChild("ESP_Highlight")
+    if highlight then highlight:Destroy() end
+end
+local function updateESP(enabled)
+    if enabled then
+        for _, player in pairs(Players:GetPlayers()) do
+            if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("Humanoid") and player.Character.Humanoid.Health > 0 then
+                if player.Team ~= LocalPlayer.Team then
+                    addHighlightToCharacter(player.Character)
+                end
+            end
+        end
+    else
+        for _, player in pairs(Players:GetPlayers()) do
+            if player.Character then
+                removeHighlightFromCharacter(player.Character)
+            end
+        end
+    end
+end
+
+-- Aimbot
+local RunServiceRenderConnection
+local function getClosestTarget()
+    local closestPlayer, shortestDistance = nil, math.huge
+    local camera = workspace.CurrentCamera
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("Humanoid") and player.Character.Humanoid.Health > 0 and player.Team ~= LocalPlayer.Team then
+            local head = player.Character:FindFirstChild("Head")
+            if head then
+                local screenPoint, onScreen = camera:WorldToViewportPoint(head.Position)
+                if onScreen then
+                    local mousePos = UserInputService:GetMouseLocation()
+                    local dist = (Vector2.new(screenPoint.X, screenPoint.Y) - Vector2.new(mousePos.X, mousePos.Y)).Magnitude
+                    if dist < shortestDistance then
+                        shortestDistance = dist
+                        closestPlayer = player
+                    end
+                end
+            end
+        end
+    end
+    return closestPlayer
+end
+local AimbotSmoothing = 0.3
+local function aimbotStep()
+    local target = getClosestTarget()
+    if target and target.Character and target.Character:FindFirstChild("Head") then
+        local camera = workspace.CurrentCamera
+        local desiredCFrame = CFrame.new(camera.CFrame.Position, target.Character.Head.Position)
+        camera.CFrame = camera.CFrame:Lerp(desiredCFrame, AimbotSmoothing)
+    end
+end
+
+-- God Mode
+local character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+local humanoid = character:WaitForChild("Humanoid")
+local GodConnection, lastHealth = nil, nil
+local function setupGodMode(humanoid)
+    if GodConnection then GodConnection:Disconnect() GodConnection = nil end
+    if humanoid == nil then return end
+    lastHealth = humanoid.Health
+    GodConnection = humanoid.HealthChanged:Connect(function(newHealth)
+        if GODEnabled then
+            if newHealth < lastHealth then
+                humanoid.Health = lastHealth
+            else
+                lastHealth = newHealth
+            end
+        else
+            lastHealth = newHealth
+        end
+    end)
+end
+setupGodMode(humanoid)
+
+-- Buton Clickler
+ESPButton.MouseButton1Click:Connect(function()
+    ESPEnabled = not ESPEnabled
+    updateButton(ESPButton, ESPEnabled, "Q")
+    updateESP(ESPEnabled)
+end)
+AIMButton.MouseButton1Click:Connect(function()
+    AIMBOTEnabled = not AIMBOTEnabled
+    updateButton(AIMButton, AIMBOTEnabled, "E")
+    if AIMBOTEnabled then
+        RunServiceRenderConnection = RunService.RenderStepped:Connect(aimbotStep)
+    else
+        if RunServiceRenderConnection then RunServiceRenderConnection:Disconnect() RunServiceRenderConnection = nil end
+    end
+end)
+GodButton.MouseButton1Click:Connect(function()
+    GODEnabled = not GODEnabled
+    updateButton(GodButton, GODEnabled, "X")
+    if humanoid and GODEnabled then lastHealth = humanoid.Health end
+end)
+
+LocalPlayer.CharacterAdded:Connect(function(char)
+    character = char
+    humanoid = char:WaitForChild("Humanoid")
+    setupGodMode(humanoid)
+end)
+
+-- Minimize
+local minimized = false
+local function toggleMinimize()
+    if minimized == false then
+        local tweenSize = TweenService:Create(MainFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {Size = UDim2.new(0, 600, 0, 50)})
+        tweenSize:Play()
+        tweenSize.Completed:Wait()
+        ContentFrame.Visible = false
+        minimized = true
+    else
+        ContentFrame.Visible = true
+        local tweenSize = TweenService:Create(MainFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {Size = UDim2.new(0, 600, 0, 400)})
+        tweenSize:Play()
+        minimized = false
+    end
+end
+MinimizeBtn.MouseButton1Click:Connect(toggleMinimize)
+
+-- Drag sistemi
+local dragging, dragInput, dragStart, startPos = false, nil, nil, nil
+local function update(input)
+    local delta = input.Position - dragStart
+    MainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+end
+MainFrame.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging, dragStart, startPos = true, input.Position, MainFrame.Position
+        input.Changed:Connect(function() if input.UserInputState == Enum.UserInputState.End then dragging = false end end)
+    end
+end)
+MainFrame.InputChanged:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseMovement then dragInput = input end end)
+UserInputService.InputChanged:Connect(function(input) if dragging and input == dragInput then update(input) end end)
+
+-- Kısayol tuşları (E, Q, X, M)
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if not gameProcessed then
+        if input.KeyCode == Enum.KeyCode.E then
+            AIMButton.MouseButton1Click:Fire()
+        elseif input.KeyCode == Enum.KeyCode.Q then
+            ESPButton.MouseButton1Click:Fire()
+        elseif input.KeyCode == Enum.KeyCode.X then
+            GodButton.MouseButton1Click:Fire()
+        elseif input.KeyCode == Enum.KeyCode.M then
+            toggleMinimize()
+        end
+    end
+end)
